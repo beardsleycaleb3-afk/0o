@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="./manifest.json">
+  <title>VLOO_POWER_SYSTEM_V6</title>
+  <style>
+    body { margin:0; padding:0; overflow:hidden; background:#050505; color:#e0e0e0; font-family:'Courier New', monospace; touch-action:none; }
+    #appRoot { display:flex; flex-direction:column; width:100vw; height:100vh; position:relative; }
+    @keyframes blink { 0% { opacity:1; } 50% { opacity:0.3; } 100% { opacity:1; } }
+    button { cursor:pointer; background: #1a1a1a; color: #0f0; border: 1px solid #0f0; padding: 10px; font-size: 11px; text-transform: uppercase; border-radius: 4px; }
+    .hud { position:absolute; z-index:100; pointer-events:none; font-size:10px; }
+    #gridCanvasEl { width:100%; height:100px; image-rendering:pixelated; background:#080808; border-top:1px solid #333; }
+  </style>
+</head>
+<body>
+<div id="appRoot">
+  <div class="hud" style="top:10px; right:10px; color:#f00; border:1px solid #f00; padding:5px;">
+    <div style="display:inline-block; width:8px; height:8px; background:#f00; border-radius:50%; animation:blink 0.8s infinite;"></div> AUDIT_ACTIVE
+  </div>
+  <div class="hud" style="top:10px; left:10px; border-left:2px solid #0f0; padding-left:10px;">
+    V-VECTOR: <span id="vectorValEl" style="font-size:14px; color:#fff;">0.0000</span><br>
+    Y-LOCK: <span style="color:#ff00cc;">14.4</span> | MIRROR: <span style="color:#00ffcc;">018810</span>
+  </div>
+  <div id="canvasContainerEl" style="flex-grow:1; background:#050505;"></div>
+  <canvas id="gridCanvasEl"></canvas>
+  <div style="padding:10px; background:#0a0a0a; display:flex; gap:10px; justify-content:center;">
+    <input type="file" id="audioInputEl" accept="audio/*" style="display:none;">
+    <button onclick="document.getElementById('audioInputEl').click()">📂 LOAD</button>
+    <button id="playBtn">▶ INIT</button>
+  </div>
+  <div id="startOverlayEl" style="position:absolute; inset:0; background:rgba(0,0,0,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:200;">
+    <h1 style="color:#0f0;">0o_V6_CORE</h1>
+    <button id="tapStartBtn" style="padding:20px 40px; font-size:18px;">ENGAGE SYSTEM</button>
+  </div>
+</div>
+
+<script type="module">
+  import * as THREE from 'https://esm.sh/three@0.177.0';
+  import { OrbitControls } from 'https://esm.sh/three@0.177.0/examples/jsm/controls/OrbitControls.js';
+
+  if ('serviceWorker' in navigator) { navigator.serviceWorker.register('./sw.js'); }
+
+  const POINT_COUNT = 8228;
+  const GROUNDING_LOCK = 14.4;
+  const SATURATION = 8.57;
+  
+  let scene, camera, renderer, gridMesh, audioCtx, analyser, dataArray;
+  let isPlaying = false, audioBuffer = null, source = null;
+
+  async function initAudio() {
+    if(!audioCtx) {
+      audioCtx = new AudioContext();
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      dataArray = new Uint8Array(analyser.frequencyBinCount);
+    }
+    if(audioCtx.state === 'suspended') await audioCtx.resume();
+  }
+
+  document.getElementById('audioInputEl').onchange = async (e) => {
+    const file = e.target.files[0];
+    await initAudio();
+    audioBuffer = await audioCtx.decodeAudioData(await file.arrayBuffer());
+    document.getElementById('playBtn').textContent = "▶ START";
+  };
+
+  document.getElementById('playBtn').onclick = async () => {
+    if(!audioBuffer) return;
+    if(isPlaying) { source.stop(); isPlaying = false; }
+    else {
+      source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(analyser);
+      analyser.connect(audioCtx.destination);
+      source.start(0);
+      isPlaying = true;
+    }
+  };
+
+  function init3D() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 5, 12);
+    renderer = new THREE.WebGLRenderer({ antialias: false });
+    renderer.setSize(window.innerWidth, window.innerHeight - 160);
+    document.getElementById('canvasContainerEl').appendChild(renderer.domElement);
+    
+    const geo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+    gridMesh = new THREE.InstancedMesh(geo, mat, POINT_COUNT);
+    scene.add(gridMesh);
+
+    const dummy = new THREE.Object3D();
+    for(let i=0; i<POINT_COUNT; i++) {
+      dummy.position.set((Math.random()-0.5)*30, -2, (Math.random()-0.5)*30);
+      dummy.updateMatrix();
+      gridMesh.setMatrixAt(i, dummy.matrix);
+    }
+    
+    function loop() {
+      requestAnimationFrame(loop);
+      if(isPlaying && analyser) {
+        analyser.getByteFrequencyData(dataArray);
+        const avg = dataArray.reduce((a,b)=>a+b)/dataArray.length;
+        document.getElementById('vectorValEl').textContent = (avg/255).toFixed(4);
+        
+        const d = new THREE.Object3D();
+        for(let i=0; i<500; i++) {
+          gridMesh.getMatrixAt(i, d.matrix);
+          d.matrix.decompose(d.position, d.rotation, d.scale);
+          d.scale.y = Math.min((dataArray[i]/255)*GROUNDING_LOCK, SATURATION);
+          d.updateMatrix();
+          gridMesh.setMatrixAt(i, d.matrix);
+        }
+        gridMesh.instanceMatrix.needsUpdate = true;
+      }
+      renderer.render(scene, camera);
+    }
+    loop();
+  }
+
+  document.getElementById('tapStartBtn').onclick = () => {
+    document.getElementById('startOverlayEl').style.display = 'none';
+    init3D();
+    initAudio();
+  };
+</script>
+</body>
+</html>
