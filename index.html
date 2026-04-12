@@ -2,53 +2,116 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=350, height=500, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="manifest" href="./manifest.json">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="0o">
-  <title>0o</title>
+  <title>0o_V3</title>
   <style>
-    body { margin:0; padding:0; overflow:hidden; background:#000; color:#0f0; font-family:monospace; touch-action:none; width:350px; height:500px; }
-    #0o_Root { display:flex; flex-direction:column; width:350px; height:500px; position:relative; overflow:hidden; }
-    #0o_Lattice { width:100%; height:100px; background:#080808; border-top:1px solid #0f0; image-rendering:pixelated; flex-shrink:0; }
-    .0o_HUD { position:absolute; z-index:100; pointer-events:none; font-size:9px; text-transform:uppercase; }
-    button { cursor:pointer; background:#000; color:#0f0; border:1px solid #0f0; padding:8px; font-family:monospace; font-size:10px; flex:1; text-transform:uppercase; }
-    #0o_Overlay { position:absolute; inset:0; background:#000; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:200; }
-    canvas { display: block; }
+    body { margin:0; padding:0; overflow:hidden; background:#050505; color:#0f0; font-family:monospace; touch-action:none; width:350px; height:500px; }
+    #appRoot { display:flex; flex-direction:column; width:350px; height:500px; position:relative; border:1px solid #111; box-sizing:border-box; }
+    
+    /* HUD & AUDIT */
+    #auditEl { position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.2); border:1px solid #f00; color:#f00; padding:3px 6px; font-size:9px; font-weight:bold; z-index:100; animation:blink 1s infinite; }
+    #vectorHud { position:absolute; top:5px; left:5px; border-left:2px solid #0f0; padding-left:6px; font-size:8px; z-index:100; }
+    
+    /* 3D VIEWPORT */
+    #viewport { flex-grow:1; background:#000; width:100%; position:relative; }
+    
+    /* 960 LATTICE CANVAS */
+    #gridCtn { height:100px; background:#111; border-top:1px solid #333; position:relative; flex-shrink:0; }
+    #gridCanvas { width:100%; height:100%; image-rendering:pixelated; }
+
+    /* CONTROLS */
+    #ctrlBar { height:60px; background:#0a0a0a; border-top:1px solid #0f0; display:flex; align-items:center; justify-content:space-around; padding:5px; gap:4px; }
+    button { background:none; border:1px solid #0f0; color:#0f0; padding:8px 4px; font-size:9px; flex:1; text-transform:uppercase; font-family:monospace; }
+    
+    /* MODAL EXPORT */
+    #logOverlay { position:absolute; inset:0; background:rgba(0,0,0,0.95); z-index:500; display:none; flex-direction:column; padding:20px; }
+    textarea { flex-grow:1; background:#111; color:#0f0; border:1px solid #333; font-size:9px; padding:10px; margin-bottom:10px; }
+
+    @keyframes blink { 0% { opacity:1; } 50% { opacity:0.3; } 100% { opacity:1; } }
   </style>
 </head>
 <body>
-<div id="0o_Root">
-  <div class="0o_HUD" style="top:12px; left:12px; border-left:2px solid #0f0; padding-left:8px;">
-    <div>0o_CORE_OSC</div>
-    <div id="v_val" style="font-size:20px; color:#fff;">0.0000</div>
-    <div style="color:#ff00cc; font-size:8px;">Y-LOCK: 14.4</div>
+
+<div id="appRoot">
+  <div id="auditEl">AUDIT: DATA_MINING_ACTIVE</div>
+  <div id="vectorHud">
+    V-VECTOR OSC: <span id="vVal" style="color:#fff;">0.0000</span><br>
+    LOCK: 14.4 | SAT: 8.57
   </div>
 
-  <div id="0o_Viewport" style="flex-grow:1; background:#000; width:100%;"></div>
-  <canvas id="0o_Lattice"></canvas>
-
-  <div style="height:55px; background:#000; display:flex; padding:5px; gap:5px; border-top:1px solid #333; box-sizing:border-box;">
-    <input type="file" id="0o_audio_in" accept="audio/*" style="display:none;">
-    <button onclick="document.getElementById('0o_audio_in').click()">0o_LOAD</button>
-    <button id="0o_play">0o_INIT</button>
+  <div id="viewport"></div>
+  
+  <div id="gridCtn">
+    <canvas id="gridCanvas"></canvas>
   </div>
 
-  <div id="0o_Overlay">
-    <h1 style="color:#0f0; letter-spacing:15px; margin:0;">0o</h1>
-    <p style="color:#333; font-size:8px; margin-bottom:20px;">v2009 | 018810 MIRROR</p>
-    <button id="0o_start" style="flex:none; padding:15px 40px; border-width:2px;">ENGAGE</button>
+  <div id="ctrlBar">
+    <input type="file" id="audioIn" accept="audio/*" style="display:none;">
+    <button onclick="document.getElementById('audioIn').click()">LOAD</button>
+    <button id="playBtn">INIT</button>
+    <button id="camBtn">CAM</button>
+    <button id="copyBtn">JSON</button>
+  </div>
+
+  <div id="logOverlay">
+    <div style="font-size:10px; margin-bottom:10px;">V3_MINING_LOG_DOC</div>
+    <textarea id="logArea" readonly></textarea>
+    <button onclick="document.getElementById('logOverlay').style.display='none'">CLOSE</button>
   </div>
 </div>
 
 <script type="module">
   import * as THREE from 'https://esm.sh/three@0.177.0';
-  
-  const POINTS = 8228;
-  const Y_LOCK = 14.4;
-  let scene, camera, renderer, mesh, aCtx, anal, dArray, isOn = false, src, buf;
+  import { OrbitControls } from 'https://esm.sh/three@0.177.0/examples/jsm/controls/OrbitControls.js';
 
-  async function sync0o() {
+  const POINTS = 8228;
+  const SEEDS = 2057;
+  const Y_LOCK = 14.4;
+  const SAT_LIMIT = 8.57;
+  const GRID_SIZE = 960; // 32x30
+
+  let scene, camera, renderer, controls, gridMesh, aCtx, anal, dArray, isOn = false, src, buf;
+  let miningLog = [];
+  const gCanvas = document.getElementById('gridCanvas');
+  const gCtx = gCanvas.getContext('2d', {alpha:false});
+
+  function init() {
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(60, 350 / 340, 0.1, 1000);
+    camera.position.set(10, 10, 10);
+
+    renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+    renderer.setSize(350, 340);
+    document.getElementById('viewport').appendChild(renderer.domElement);
+
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // 018810 Mirror Lattice Logic
+    const geo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    gridMesh = new THREE.InstancedMesh(geo, mat, POINTS);
+    scene.add(gridMesh);
+
+    const dummy = new THREE.Object3D();
+    for(let i=0; i<POINTS; i++) {
+      let x = (i % 40) - 20;
+      let z = Math.floor(i / 40) - 20;
+      // 018810 Bitwise Parity for Symmetry
+      if (x < 0) x = x * -1; 
+      dummy.position.set(x, -2, z);
+      dummy.updateMatrix();
+      gridMesh.setMatrixAt(i, dummy.matrix);
+    }
+
+    gCanvas.width = 350;
+    gCanvas.height = 100;
+
+    animate();
+  }
+
+  async function syncAudio() {
     if(!aCtx) {
       aCtx = new (window.AudioContext || window.webkitAudioContext)();
       anal = aCtx.createAnalyser();
@@ -58,15 +121,15 @@
     if(aCtx.state === 'suspended') await aCtx.resume();
   }
 
-  document.getElementById('0o_audio_in').onchange = async (e) => {
-    await sync0o();
+  document.getElementById('audioIn').onchange = async (e) => {
+    await syncAudio();
     buf = await aCtx.decodeAudioData(await e.target.files[0].arrayBuffer());
-    document.getElementById('0o_play').textContent = "0o_READY";
+    document.getElementById('playBtn').textContent = "READY";
   };
 
-  document.getElementById('0o_play').onclick = () => {
+  document.getElementById('playBtn').onclick = () => {
     if(!buf) return;
-    if(isOn) { src.stop(); isOn = false; document.getElementById('0o_play').textContent = "0o_START"; }
+    if(isOn) { src.stop(); isOn = false; }
     else {
       src = aCtx.createBufferSource();
       src.buffer = buf;
@@ -74,76 +137,64 @@
       anal.connect(aCtx.destination);
       src.start(0);
       isOn = true;
-      document.getElementById('0o_play').textContent = "0o_HALT";
+      document.getElementById('playBtn').textContent = "HALT";
     }
   };
 
-  function init0o() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(60, 350 / 345, 0.1, 1000);
-    camera.position.set(10, 10, 10);
-    camera.lookAt(0,0,0);
-    renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
-    renderer.setSize(350, 345);
-    document.getElementById('0o_Viewport').appendChild(renderer.domElement);
+  document.getElementById('copyBtn').onclick = () => {
+    const doc = {
+      system: "VLOO_POWER_SYSTEM_V3",
+      constants: { grounding_lock: Y_LOCK, saturation: SAT_LIMIT, mirror: "018810" },
+      log: miningLog.slice(-50)
+    };
+    document.getElementById('logArea').value = JSON.stringify(doc, null, 2);
+    document.getElementById('logOverlay').style.display = 'flex';
+  };
 
-    const geo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    mesh = new THREE.InstancedMesh(geo, mat, POINTS);
-    scene.add(mesh);
+  function animate() {
+    requestAnimationFrame(animate);
+    if(isOn && anal) {
+      anal.getByteFrequencyData(dArray);
+      let vVec = dArray[0] / 255;
+      document.getElementById('vVal').textContent = vVec.toFixed(4);
 
-    const dummy = new THREE.Object3D();
-    for(let i=0; i<POINTS; i++) {
-      dummy.position.set((i % 40) - 20, -2, Math.floor(i / 40) - 20);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-    }
-
-    const lCanvas = document.getElementById('0o_Lattice');
-    const lCtx = lCanvas.getContext('2d');
-    lCanvas.width = 350;
-    lCanvas.height = 100;
-
-    function frame() {
-      requestAnimationFrame(frame);
-      if(isOn && anal) {
-        anal.getByteFrequencyData(dArray);
-        document.getElementById('v_val').textContent = (dArray[0]/255).toFixed(4);
-        
-        const d = new THREE.Object3D();
-        for(let i=0; i<400; i++) {
-          mesh.getMatrixAt(i, d.matrix);
-          d.matrix.decompose(d.position, d.rotation, d.scale);
-          d.scale.y = (dArray[i % dArray.length]/255) * Y_LOCK;
-          d.updateMatrix();
-          mesh.setMatrixAt(i, d.matrix);
-        }
-        mesh.instanceMatrix.needsUpdate = true;
-
-        lCtx.fillStyle = '#080808';
-        lCtx.fillRect(0,0,350,100);
-        lCtx.fillStyle = '#0f0';
-        for(let j=0; j<350; j++) {
-            let h = (dArray[j % dArray.length]/255) * 100;
-            lCtx.fillRect(j, 100-h, 1, h);
-        }
+      // Recursive Density Extraction
+      const d = new THREE.Object3D();
+      for(let i=0; i<400; i++) {
+        gridMesh.getMatrixAt(i, d.matrix);
+        d.matrix.decompose(d.position, d.rotation, d.scale);
+        d.scale.y = (dArray[i % 256]/255) * Y_LOCK;
+        d.updateMatrix();
+        gridMesh.setMatrixAt(i, d.matrix);
       }
-      renderer.render(scene, camera);
+      gridMesh.instanceMatrix.needsUpdate = true;
+
+      // Lattice Mapping (1 Byte per Tile)
+      gCtx.fillStyle = '#111';
+      gCtx.fillRect(0,0,350,100);
+      const cellW = 350 / 32;
+      const cellH = 100 / 30;
+      for(let i=0; i<GRID_SIZE; i++) {
+        let val = dArray[i % 256];
+        gCtx.fillStyle = `rgb(0, ${val}, 0)`;
+        gCtx.fillRect((i%32)*cellW, Math.floor(i/32)*cellH, cellW-1, cellH-1);
+      }
+
+      // Mining Log Capture
+      if(Date.now() % 10 === 0) {
+        miningLog.push({ t: Date.now(), v: vVec, h: dArray[0].toString(16) });
+      }
     }
-    frame();
+    if (controls) controls.update();
+    renderer.render(scene, camera);
   }
 
-  document.getElementById('0o_start').onclick = () => {
-    document.getElementById('0o_Overlay').style.display = 'none';
-    init0o();
-  };
+  init();
 
-  // --- SERVICE WORKER REGISTRATION AT ABSOLUTE BOTTOM ---
+  // Android Chrome Service Worker Registration
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js').then(() => {
-        console.log('0o_LOCKED');
-      });
+      navigator.serviceWorker.register('./sw.js');
     });
   }
 </script>
