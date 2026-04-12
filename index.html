@@ -2,33 +2,153 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <link rel="manifest" href="./manifest.json">
   <title>0o</title>
   <style>
-    body { margin:0; padding:0; overflow:hidden; background:#050505; color:#0f0; font-family:monospace; touch-action:none; width:350px; height:500px; }
-    #appRoot { display:flex; flex-direction:column; width:350px; height:500px; position:relative; border:1px solid #111; box-sizing:border-box; }
-    
-    /* HUD & AUDIT */
-    #auditEl { position:absolute; top:5px; right:5px; background:rgba(255,0,0,0.2); border:1px solid #f00; color:#f00; padding:3px 6px; font-size:9px; font-weight:bold; z-index:100; animation:blink 1s infinite; }
-    #vectorHud { position:absolute; top:5px; left:5px; border-left:2px solid #0f0; padding-left:6px; font-size:8px; z-index:100; }
-    
-    /* 3D VIEWPORT */
-    #viewport { flex-grow:1; background:#000; width:100%; position:relative; }
-    
-    /* 960 LATTICE CANVAS */
-    #gridCtn { height:100px; background:#111; border-top:1px solid #333; position:relative; flex-shrink:0; }
-    #gridCanvas { width:100%; height:100%; image-rendering:pixelated; }
+    :root {
+      --accent: #0f0;
+      --bg: #050505;
+      --dark: #0a0a0a;
+    }
 
-    /* CONTROLS */
-    #ctrlBar { height:60px; background:#0a0a0a; border-top:1px solid #0f0; display:flex; align-items:center; justify-content:space-around; padding:5px; gap:4px; }
-    button { background:none; border:1px solid #0f0; color:#0f0; padding:8px 4px; font-size:9px; flex:1; text-transform:uppercase; font-family:monospace; }
-    
-    /* MODAL EXPORT */
-    #logOverlay { position:absolute; inset:0; background:rgba(0,0,0,0.95); z-index:500; display:none; flex-direction:column; padding:20px; }
-    textarea { flex-grow:1; background:#111; color:#0f0; border:1px solid #333; font-size:9px; padding:10px; margin-bottom:10px; }
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--accent);
+      font-family: monospace;
+      touch-action: none;
+      height: 100dvh;
+      width: 100dvw;
+    }
 
-    @keyframes blink { 0% { opacity:1; } 50% { opacity:0.3; } 100% { opacity:1; } }
+    #appRoot {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      box-sizing: border-box;
+      border: 1px solid #111;
+    }
+
+    /* HUD */
+    #auditEl {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255,0,0,0.25);
+      border: 1px solid #f00;
+      color: #f00;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-weight: bold;
+      z-index: 100;
+      animation: blink 1.2s infinite;
+      letter-spacing: 1px;
+    }
+
+    #vectorHud {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      border-left: 3px solid var(--accent);
+      padding-left: 8px;
+      font-size: 9.5px;
+      line-height: 1.3;
+      z-index: 100;
+      text-shadow: 0 0 4px #0f0;
+    }
+
+    /* 3D Viewport */
+    #viewport {
+      flex-grow: 1;
+      background: #000;
+      position: relative;
+      min-height: 200px;
+    }
+
+    /* Grid */
+    #gridCtn {
+      height: 110px;
+      background: #111;
+      border-top: 1px solid #333;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    #gridCanvas {
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      display: block;
+    }
+
+    /* Controls */
+    #ctrlBar {
+      height: 68px;
+      background: var(--dark);
+      border-top: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 8px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: none;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 10px 8px;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      font-family: monospace;
+      flex: 1;
+      min-width: 60px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+
+    button:active {
+      background: rgba(0, 255, 0, 0.15);
+      transform: scale(0.95);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    /* Log Modal */
+    #logOverlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.97);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      padding: 15px;
+    }
+
+    textarea {
+      flex-grow: 1;
+      background: #111;
+      color: #0f0;
+      border: 1px solid #333;
+      font-size: 9.5px;
+      padding: 12px;
+      font-family: monospace;
+      resize: none;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
   </style>
 </head>
 <body>
@@ -47,17 +167,21 @@
   </div>
 
   <div id="ctrlBar">
-    <input type="file" id="audioIn" accept="audio/*" style="display:none;">
-    <button onclick="document.getElementById('audioIn').click()">LOAD</button>
+    <input type="file" id="audioIn" accept="audio/*">
+    <button id="loadBtn">LOAD AUDIO</button>
     <button id="playBtn">INIT</button>
-    <button id="camBtn">CAM</button>
-    <button id="copyBtn">JSON</button>
+    <button id="camBtn">CAM RESET</button>
+    <button id="copyBtn">EXPORT JSON</button>
+    <button id="fsBtn">FULLSCREEN</button>
   </div>
 
   <div id="logOverlay">
-    <div style="font-size:10px; margin-bottom:10px;">V3_MINING_LOG_DOC</div>
+    <div style="font-size:11px; margin-bottom:8px;">V3_MINING_LOG_DOC</div>
     <textarea id="logArea" readonly></textarea>
-    <button onclick="document.getElementById('logOverlay').style.display='none'">CLOSE</button>
+    <div style="display:flex; gap:8px; margin-top:10px;">
+      <button onclick="document.getElementById('logOverlay').style.display='none'" style="flex:1">CLOSE</button>
+      <button onclick="copyLogToClipboard()" style="flex:1">COPY TO CLIPBOARD</button>
+    </div>
   </div>
 </div>
 
@@ -66,71 +190,95 @@
   import { OrbitControls } from 'https://esm.sh/three@0.177.0/examples/jsm/controls/OrbitControls.js';
 
   const POINTS = 8228;
-  const SEEDS = 2057;
   const Y_LOCK = 14.4;
-  const SAT_LIMIT = 8.57;
-  const GRID_SIZE = 960; // 32x30
+  const GRID_SIZE = 960;
 
   let scene, camera, renderer, controls, gridMesh, aCtx, anal, dArray, isOn = false, src, buf;
   let miningLog = [];
+  let resizeTimeout;
+
   const gCanvas = document.getElementById('gridCanvas');
-  const gCtx = gCanvas.getContext('2d', {alpha:false});
+  const gCtx = gCanvas.getContext('2d', { alpha: false });
 
   function init() {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(60, 350 / 340, 0.1, 1000);
-    camera.position.set(10, 10, 10);
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / 400, 0.1, 1000);
+    camera.position.set(15, 12, 15);
 
-    renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
-    renderer.setSize(350, 340);
+    renderer = new THREE.WebGLRenderer({ 
+      antialias: false, 
+      powerPreference: "high-performance" 
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     document.getElementById('viewport').appendChild(renderer.domElement);
 
     controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.dampingFactor = 0.15;
+    controls.enableZoom = true;
+    controls.minDistance = 5;
+    controls.maxDistance = 60;
 
-    // 018810 Mirror Lattice Logic
-    const geo = new THREE.BoxGeometry(0.15, 0.15, 0.15);
-    const mat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    // Lattice
+    const geo = new THREE.BoxGeometry(0.18, 0.18, 0.18);
+    const mat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
     gridMesh = new THREE.InstancedMesh(geo, mat, POINTS);
     scene.add(gridMesh);
 
     const dummy = new THREE.Object3D();
-    for(let i=0; i<POINTS; i++) {
-      let x = (i % 40) - 20;
-      let z = Math.floor(i / 40) - 20;
-      // 018810 Bitwise Parity for Symmetry
-      if (x < 0) x = x * -1; 
-      dummy.position.set(x, -2, z);
+    for (let i = 0; i < POINTS; i++) {
+      const x = (i % 40) - 20;
+      const z = Math.floor(i / 40) - 20;
+      dummy.position.set(x < 0 ? -x : x, -2, z);
       dummy.updateMatrix();
       gridMesh.setMatrixAt(i, dummy.matrix);
     }
 
-    gCanvas.width = 350;
-    gCanvas.height = 100;
-
+    resize();
     animate();
   }
 
+  function resize() {
+    const vp = document.getElementById('viewport');
+    const width = vp.clientWidth;
+    const height = vp.clientHeight;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+  }
+
   async function syncAudio() {
-    if(!aCtx) {
+    if (!aCtx) {
       aCtx = new (window.AudioContext || window.webkitAudioContext)();
       anal = aCtx.createAnalyser();
       anal.fftSize = 512;
       dArray = new Uint8Array(anal.frequencyBinCount);
     }
-    if(aCtx.state === 'suspended') await aCtx.resume();
+    if (aCtx.state === 'suspended') await aCtx.resume();
   }
 
+  // Event Listeners
+  document.getElementById('loadBtn').onclick = () => document.getElementById('audioIn').click();
+
   document.getElementById('audioIn').onchange = async (e) => {
+    if (!e.target.files[0]) return;
     await syncAudio();
-    buf = await aCtx.decodeAudioData(await e.target.files[0].arrayBuffer());
-    document.getElementById('playBtn').textContent = "READY";
+    try {
+      buf = await aCtx.decodeAudioData(await e.target.files[0].arrayBuffer());
+      document.getElementById('playBtn').textContent = "PLAY";
+    } catch (err) {
+      alert("Audio decode failed");
+    }
   };
 
   document.getElementById('playBtn').onclick = () => {
-    if(!buf) return;
-    if(isOn) { src.stop(); isOn = false; }
-    else {
+    if (!buf) return;
+    if (isOn) {
+      src.stop();
+      isOn = false;
+      document.getElementById('playBtn').textContent = "PLAY";
+    } else {
       src = aCtx.createBufferSource();
       src.buffer = buf;
       src.connect(anal);
@@ -141,61 +289,94 @@
     }
   };
 
+  document.getElementById('camBtn').onclick = () => {
+    camera.position.set(15, 12, 15);
+    controls.target.set(0, 0, 0);
+    controls.update();
+  };
+
   document.getElementById('copyBtn').onclick = () => {
     const doc = {
       system: "VLOO_POWER_SYSTEM_V3",
-      constants: { grounding_lock: Y_LOCK, saturation: SAT_LIMIT, mirror: "018810" },
-      log: miningLog.slice(-50)
+      timestamp: Date.now(),
+      constants: { grounding_lock: Y_LOCK, saturation: 8.57, mirror: "018810" },
+      log: miningLog.slice(-60)
     };
     document.getElementById('logArea').value = JSON.stringify(doc, null, 2);
     document.getElementById('logOverlay').style.display = 'flex';
   };
 
+  function copyLogToClipboard() {
+    const ta = document.getElementById('logArea');
+    navigator.clipboard.writeText(ta.value);
+    alert("✅ Copied to clipboard");
+  }
+
+  // Fullscreen
+  document.getElementById('fsBtn').onclick = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   function animate() {
     requestAnimationFrame(animate);
-    if(isOn && anal) {
+
+    if (isOn && anal) {
       anal.getByteFrequencyData(dArray);
-      let vVec = dArray[0] / 255;
+      const vVec = dArray[0] / 255;
       document.getElementById('vVal').textContent = vVec.toFixed(4);
 
-      // Recursive Density Extraction
-      const d = new THREE.Object3D();
-      for(let i=0; i<400; i++) {
-        gridMesh.getMatrixAt(i, d.matrix);
-        d.matrix.decompose(d.position, d.rotation, d.scale);
-        d.scale.y = (dArray[i % 256]/255) * Y_LOCK;
-        d.updateMatrix();
-        gridMesh.setMatrixAt(i, d.matrix);
+      // Update 3D lattice
+      const dummy = new THREE.Object3D();
+      for (let i = 0; i < 600; i++) {
+        gridMesh.getMatrixAt(i, dummy.matrix);
+        dummy.matrix.decompose(dummy.position, dummy.rotation, dummy.scale);
+        dummy.scale.y = (dArray[i % 256] / 255) * Y_LOCK + 0.1;
+        dummy.updateMatrix();
+        gridMesh.setMatrixAt(i, dummy.matrix);
       }
       gridMesh.instanceMatrix.needsUpdate = true;
 
-      // Lattice Mapping (1 Byte per Tile)
+      // Grid visualization
       gCtx.fillStyle = '#111';
-      gCtx.fillRect(0,0,350,100);
-      const cellW = 350 / 32;
-      const cellH = 100 / 30;
-      for(let i=0; i<GRID_SIZE; i++) {
-        let val = dArray[i % 256];
-        gCtx.fillStyle = `rgb(0, ${val}, 0)`;
-        gCtx.fillRect((i%32)*cellW, Math.floor(i/32)*cellH, cellW-1, cellH-1);
+      gCtx.fillRect(0, 0, gCanvas.width, gCanvas.height);
+      const cols = 32;
+      const rows = 30;
+      const cellW = gCanvas.width / cols;
+      const cellH = gCanvas.height / rows;
+
+      for (let i = 0; i < GRID_SIZE; i++) {
+        const val = dArray[i % 256];
+        gCtx.fillStyle = `rgb(0, ${Math.max(40, val)}, 0)`;
+        gCtx.fillRect((i % cols) * cellW, Math.floor(i / cols) * cellH, cellW - 1, cellH - 1);
       }
 
-      // Mining Log Capture
-      if(Date.now() % 10 === 0) {
-        miningLog.push({ t: Date.now(), v: vVec, h: dArray[0].toString(16) });
+      // Logging
+      if (Math.random() < 0.3) {
+        miningLog.push({ t: Date.now(), v: vVec.toFixed(4), h: dArray[0].toString(16) });
+        if (miningLog.length > 200) miningLog.shift();
       }
     }
+
     if (controls) controls.update();
-    renderer.render(scene, camera);
+    if (renderer) renderer.render(scene, camera);
   }
 
+  // Resize handler
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(resize, 100);
+  });
+
+  // Init
   init();
 
-  // Android Chrome Service Worker Registration
+  // Service Worker
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js');
-    });
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 </script>
 </body>
