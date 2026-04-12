@@ -1,4 +1,4 @@
-const NAME = '0o-v2';
+const NAME = '0o';
 const CACHE_LIST = [
   './',
   './index.html',
