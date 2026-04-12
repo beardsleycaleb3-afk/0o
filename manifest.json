@@ -1,16 +1,20 @@
 {
-  "name": "VLOO_POWER_SYSTEM_V6",
+  "name": "0o",
   "short_name": "0o",
   "start_url": "./index.html",
-  "display": "standalone",
-  "background_color": "#050505",
+  "display": "standalone, fullscreen",
+  "background_color": "#000000",
   "theme_color": "#00ff00",
-  "orientation": "portrait",
   "icons": [
     {
-      "src": "https://via.placeholder.com/192/050505/00ff00?text=0o",
+      "src": "icon192.png",
       "type": "image/png",
       "sizes": "192x192"
+    },
+    {
+      "src": "icon512.png",
+      "type": "image/png",
+      "sizes": "512x512"
     }
   ]
 }
