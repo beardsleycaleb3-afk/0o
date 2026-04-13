@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>0o</title>
+    <style>
+        /* Hardcoded 0o.css Logic */
+        body { background: #000; color: #018810; margin: 0; overflow: hidden; font-family: monospace; }
+        #0o { display: grid; grid-template-columns: repeat(32, 1fr); grid-template-rows: repeat(30, 1fr); height: 100vh; width: 100vw; }
+        .o-tile { border: 1px solid rgba(1, 136, 16, 0.05); box-sizing: border-box; }
+        .o-tile.active { background: #018810; box-shadow: 0 0 10px #018810; }
+        #0o_status { position: fixed; bottom: 10px; left: 10px; font-size: 12px; pointer-events: none; z-index: 100; }
+    </style>
+</head>
+<body>
+    <div id="0o"></div>
+    <div id="0o_status">> 0o_CPU_PROPOSAL_AWAITING...</div>
+    <canvas id="0o_canvas" style="display:none;"></canvas>
+
+    <script>
+        /** * STAGE 1: DEFINE 0o SYSTEM & VARIABLE ALLOCATION
+         * No imports. We are hardcoding the module logic directly.
+         */
+        window.0o = {
+            version: "1.0.0",
+            Mirror: {}, Kernel: {}, PPU: {}, Clock: {}, RDRAM: {},
+            Manager: {}, Grid: {}, Canvas: {}, Renderer: {}, Bridge: {}
+        };
+
+        const statusUpdate = (msg) => {
+            document.getElementById('0o_status').innerText = `> ${msg}`;
+        };
+    </script>
+    <script>
+        // --- 0o_Mirror.js Logic ---
+        window.0o.Mirror = {
+            protocol: [0, 1, 8, 8, 1, 0],
+            verify: function(key) {
+                return key === "018810";
+            },
+            transmute: function(data) {
+                // 3000:1 Geometric Transmutation Logic
+                return data * (this.protocol[1] / 3000);
+            }
+        };
+
+        // --- 0o_Kernel.js Logic ---
+        window.0o.Kernel = {
+            init: function() {
+                console.log("0o_Kernel: Online.");
+                this.bootTime = Date.now();
+            }
+        };
+
+        // --- 0o_Clock.js Logic ---
+        window.0o.Clock = {
+            hz: 358,
+            init: function() {
+                const interval = 1000 / this.hz;
+                setInterval(() => this.pulse(), interval);
+            },
+            pulse: function() {
+                // Bethlehem Sync Pulse
+            }
+        };
+
+        // --- 0o_RDRAM.js Logic ---
+        window.0o.RDRAM = {
+            memory: new Uint8Array(4 * 1024 * 1024), // 4MB Allocation
+            init: function() { console.log("0o_RDRAM: 4MB Allocated."); }
+        };
+    </script>
+    <script>
+        // --- 0o_Grid.js Logic ---
+        window.0o.Grid = {
+            init: function(containerId) {
+                const container = document.getElementById(containerId);
+                for (let i = 0; i < 960; i++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'o-tile';
+                    tile.id = `t-${i}`;
+                    container.appendChild(tile);
+                }
+            }
+        };
+
+        // --- 0o_Bridge.js Logic ---
+        window.0o.Bridge = {
+            init: function() {
+                window.addEventListener('keydown', (e) => this.input(e.key));
+            },
+            input: function(key) {
+                console.log("0o_I/O:", key);
+            }
+        };
+
+        // --- 0o_Renderer.js Logic ---
+        window.0o.Renderer = {
+            init: function() {
+                requestAnimationFrame(() => this.loop());
+            },
+            loop: function() {
+                // PPU Render Cycle
+                requestAnimationFrame(() => this.loop());
+            }
+        };
+    </script>
+
+      <script>
+        /** * STAGE 2: PROPOSED SYSTEM COMMAND
+         * Testing logic on two fronts: 
+         * Front A (Integrity) | Front B (018810 Mirror Result)
+         */
+        const 0o_PROPOSAL_COMMAND = (key) => {
+            const frontA = !!(window.0o.Kernel && window.0o.Mirror && window.0o.Clock);
+            const frontB = (window.0o.Mirror.verify(key) === true);
+            return { frontA, frontB };
+        };
+
+        /** * STAGE 3: USE (EXECUTION)
+         */
+        function 0o_BOOT() {
+            const diagnostic = 0o_PROPOSAL_COMMAND('018810');
+
+            if (diagnostic.frontA && diagnostic.frontB) {
+                // Initialize Hardware from the hardcoded definitions
+                window.0o.RDRAM.init();
+                window.0o.Kernel.init();
+                window.0o.Clock.init();
+                window.0o.Grid.init('0o');
+                window.0o.Bridge.init();
+                window.0o.Renderer.init();
+
+                statusUpdate("0o_ONLINE: FRONT_A(PASS) | FRONT_B(MATCH)");
+            } else {
+                statusUpdate(`0o_REJECTED: A:${diagnostic.frontA} B:${diagnostic.frontB}`);
+            }
+        }
+
+        // Final Bootstrapper Call
+        0o_BOOT();
+    </script>
+
+    <script>
+        /** * STAGE 4: PERSISTENCE DEFINITION (Service Worker)
+         * This locks the hardcoded index into the 0o local cache.
+         */
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Define the 0o_Worker logic inline as a Blob to ensure no external file dependencies
+                const 0o_Worker_Code = `
+                    const CACHE_NAME = '0o-v1';
+                    self.addEventListener('install', (e) => {
+                        e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(['./'])));
+                    });
+                    self.addEventListener('fetch', (e) => {
+                        e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+                    });
+                `;
+                const blob = new Blob([0o_Worker_Code], {type: 'application/javascript'});
+                const workerUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(workerUrl, {scope: './'})
+                    .then(() => console.log("0o: Persistence Layer Locked."))
+                    .catch(() => console.log("0o: Running in Volatile Mode."));
+            });
+        }
+
+        /** * STAGE 5: FINAL HARDWARE LOCKDOWN
+         * Freezes the 0o object so the logic cannot be tampered with after validation.
+         */
+        Object.freeze(window.0o);
+        Object.seal(window.0o);
+
+        console.log("0o: All Fronts Secured. System Immutable.");
+      
+    </script>
+
+
+
+</meta>
+  
+</body>
+
+
+  
+</html>
+
+
+
+
