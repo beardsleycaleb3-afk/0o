@@ -1,0 +1,16 @@
+{
+  "short_name": "0o",
+  "name": "0o",
+  "icons": [
+    {
+      "src": "assets/icon192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#050505",
+  "display": "standalone, fullscreen",
+  "orientation": "portrait",
+  "theme_color": "#018810"
+}
