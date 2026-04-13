@@ -1,1 +1,55 @@
 
+/**
+ * 0o - Style
+ * Purpose: Neon Logic Layout & 960-Tile Grid
+ * Repo: 0o
+ */
+
+:root {
+    --bg-color: #050505;
+    --neon-green: #018810; /* The 018810 Signature */
+    --tile-size: 20px;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--neon-green);
+    font-family: 'Courier New', monospace;
+    margin: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#0o-grid-container {
+    display: grid;
+    grid-template-columns: repeat(32, var(--tile-size));
+    grid-template-rows: repeat(30, var(--tile-size));
+    gap: 1px;
+    border: 2px solid var(--neon-green);
+    margin-top: 20px;
+    box-shadow: 0 0 15px var(--neon-green);
+}
+
+.o-tile {
+    width: var(--tile-size);
+    height: var(--tile-size);
+    background: rgba(1, 136, 16, 0.1);
+    border: 0.1px solid rgba(1, 136, 16, 0.2);
+    transition: background 0.1s ease;
+}
+
+.o-tile.active {
+    background: var(--neon-green);
+    box-shadow: 0 0 5px var(--neon-green);
+}
+
+#0o-status-line {
+    width: 100%;
+    padding: 10px;
+    background: #000;
+    position: fixed;
+    bottom: 0;
+    border-top: 1px solid var(--neon-green);
+}
