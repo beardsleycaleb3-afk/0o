@@ -3,7 +3,7 @@
  * Purpose: Cache-Lock & Offline Persistence
  */
 
-const CACHE_NAME = '0o-v2';
+const CACHE_NAME = '0o-v3';
 const ASSETS = [
     './',
     './index.html',
