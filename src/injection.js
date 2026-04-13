@@ -33,4 +33,4 @@ export const Injection = {
     }
 };
 
-export default Injection;}
+export default Injection;
